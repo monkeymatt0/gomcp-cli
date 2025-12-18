@@ -1,0 +1,100 @@
+package commands
+
+import (
+	"log"
+	"os"
+	"os/exec"
+	"strings"
+
+	c "github.com/monkeymatt0/gomcp-cli/constants"
+	"github.com/spf13/cobra"
+)
+
+var InitCommand = &cobra.Command{
+	Use:   "gomcp init <project_name>",
+	Short: "Init your MCP project with the given name",
+	Long:  "Create an MCP project respectin a specfici scaffholding for a standardized building",
+	Run:   Init,
+}
+
+func Init(cmd *cobra.Command, args []string) {
+
+	// Project's folder creation
+	if err := os.Mkdir(args[0], 0755); err != nil {
+		log.Fatalf("mkdir failed: %v", err)
+	}
+
+	// Setting new base path with the created folder
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("base path failed: %v", err)
+		return
+	}
+
+	bp := strings.Join([]string{wd, args[0]}, "/")
+
+	// Calling go mod init
+	gmi := exec.Command("go", "mod", "init", args[0])
+	gmi.Dir = bp
+	if err := gmi.Run(); err != nil {
+		log.Fatalf("go mod init failed: %v", err)
+	}
+
+	/*
+	* Creation of the folder internal inside the project folder
+	 */
+	bpi := strings.Join([]string{bp, c.Internal}, "/")
+	if err := os.Mkdir(bpi, 0755); err != nil {
+		log.Fatalf("mkdir internal failed: %v", err)
+	}
+
+	/*
+	* Creation of the following 2 folders:
+	* - internal/tools
+	* - internal/registry
+	 */
+	bpit := strings.Join([]string{bpi, c.Tools}, "/")
+	if err := os.Mkdir(bpit, 0755); err != nil {
+		log.Fatalf("mkdir tools failed: %v", err)
+	}
+
+	bpir := strings.Join([]string{bpi, c.Registry}, "/")
+	if err := os.Mkdir(bpir, 0755); err != nil {
+		log.Fatalf("mkdir registry failed: %v", err)
+	}
+
+	/*
+	* Creazione of the files:
+	*  - main.go
+	 */
+	_src, e := os.Getwd()
+	if e != nil {
+		log.Fatalf("getwd failed: %v", e)
+	}
+	src := strings.Join([]string{_src, c.Template, c.Tmain}, "/")
+
+	dst := strings.Join([]string{bp, c.Tmain}, "/")
+	if err := copyFile(src, dst); err != nil {
+		log.Fatalf("copy main failed: %v", err)
+	}
+
+	/*
+	* Creazione of the files:
+	*  - internal/tools/example.go
+	 */
+	src = strings.Join([]string{_src, c.Template, c.Ttools}, "/")
+
+	dst = strings.Join([]string{bp, c.Internal, c.Tools, c.Ttools}, "/")
+	if err := copyFile(src, dst); err != nil {
+		log.Fatalf("copy main failed: %v", err)
+	}
+}
+
+func copyFile(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(dst, data, 0644)
+}
