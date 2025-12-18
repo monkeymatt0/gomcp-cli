@@ -26,15 +26,14 @@ In this folder we have 2 files:
 
 ## COMMANDS
 
-### init
+### init (WIP)
 ```bash
 gomcp init <project_name>
 ```
 
 This command will init you MCP project with the basic command go mod init and also create the scaffholding for the project.
 
-### register
-### init
+### register (TODO)
 ```bash
 gomcp register <tool_name>
 ```
