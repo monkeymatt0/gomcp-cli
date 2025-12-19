@@ -27,12 +27,12 @@ func Init(cmd *cobra.Command, args []string) {
 
 	// Populating template data
 	data := mainTemplateData{
-		Module:      args[0],
-		ProjectName: args[0],
+		Module:      args[1],
+		ProjectName: args[1],
 	}
 
 	// Project's folder creation
-	if err := os.Mkdir(args[0], 0755); err != nil {
+	if err := os.Mkdir(args[1], 0755); err != nil {
 		log.Fatalf("mkdir failed: %v", err)
 	}
 
@@ -43,17 +43,17 @@ func Init(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	bp := strings.Join([]string{wd, args[0]}, "/")
+	bp := strings.Join([]string{wd, args[1]}, "/")
 
 	// Calling go mod init
-	gmi := exec.Command("go", "mod", "init", args[0])
+	gmi := exec.Command("go", "mod", "init", args[1])
 	gmi.Dir = bp
 	if err := gmi.Run(); err != nil {
 		log.Fatalf("go mod init failed: %v", err)
 	}
 
 	// Calling go get
-	gi := exec.Command("go", "get", "github.com/modelcontextprotocol/go-sdk", args[0])
+	gi := exec.Command("go", "get", "github.com/modelcontextprotocol/go-sdk", args[1])
 	gi.Dir = bp
 	if err := gi.Run(); err != nil {
 		log.Fatalf("go get failed: %v", err)
@@ -117,7 +117,7 @@ func Init(cmd *cobra.Command, args []string) {
 
 	dst = strings.Join([]string{bp, c.Internal, c.Tools, c.Ttools[:len(c.Ttools)-4]}, "/")
 	if err := copyFile(src, dst); err != nil {
-		log.Fatalf("copy main failed: %v", err)
+		log.Fatalf("registry copy failed: %v", err)
 	}
 
 	/*
@@ -127,8 +127,21 @@ func Init(cmd *cobra.Command, args []string) {
 	src = strings.Join([]string{_src, c.Template, c.Tregistry}, "/")
 
 	dst = strings.Join([]string{bp, c.Internal, c.Registry, c.Tregistry[:len(c.Tregistry)-4]}, "/")
-	if err := copyFile(src, dst); err != nil {
-		log.Fatalf("registry copy failed: %v", err)
+
+	tf, err := os.Create(dst)
+	if err != nil {
+		log.Fatalf("registry creation failed: %v", err)
+	}
+
+	defer tf.Close()
+
+	ttpl, err := template.ParseFiles(src)
+	if err != nil {
+		log.Fatalf("parse registry template failed: %v", err)
+	}
+
+	if err := ttpl.Execute(tf, data); err != nil {
+		log.Fatalf("Failed to execute the template: %v", err)
 	}
 
 	/*
