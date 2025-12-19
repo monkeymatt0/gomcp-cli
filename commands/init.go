@@ -86,10 +86,13 @@ func Init(cmd *cobra.Command, args []string) {
 	* Creation of the file:
 	*  - main.go
 	 */
-	_src, e := os.Getwd()
+	_src, e := os.Executable()
 	if e != nil {
 		log.Fatalf("getwd failed: %v", e)
 	}
+	_ssrc := strings.Split(_src, "/")
+	_bp := strings.Join(_ssrc[:len(_ssrc)-1], "/")
+	_src = _bp
 	src := strings.Join([]string{_src, c.Template, c.Tmain}, "/")
 	dst := strings.Join([]string{bp, c.Tmain}, "/")
 
