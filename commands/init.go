@@ -5,10 +5,16 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"text/template"
 
 	c "github.com/monkeymatt0/gomcp-cli/constants"
 	"github.com/spf13/cobra"
 )
+
+type mainTemplateData struct {
+	Module      string
+	ProjectName string
+}
 
 var InitCommand = &cobra.Command{
 	Use:   "gomcp init <project_name>",
@@ -18,6 +24,12 @@ var InitCommand = &cobra.Command{
 }
 
 func Init(cmd *cobra.Command, args []string) {
+
+	// Populating template data
+	data := mainTemplateData{
+		Module:      args[0],
+		ProjectName: args[0],
+	}
 
 	// Project's folder creation
 	if err := os.Mkdir(args[0], 0755); err != nil {
@@ -79,10 +91,22 @@ func Init(cmd *cobra.Command, args []string) {
 		log.Fatalf("getwd failed: %v", e)
 	}
 	src := strings.Join([]string{_src, c.Template, c.Tmain}, "/")
-
 	dst := strings.Join([]string{bp, c.Tmain}, "/")
-	if err := copyFile(src, dst); err != nil {
-		log.Fatalf("copy main failed: %v", err)
+
+	mf, err := os.Create(dst[:len(dst)-4])
+	if err != nil {
+		log.Fatalf("generate main failed: %v", err)
+	}
+	defer mf.Close()
+
+	tpl, err := template.ParseFiles(src)
+	if err != nil {
+		log.Fatalf("failed to parse template files: %v", err)
+	}
+
+	err = tpl.Execute(mf, data)
+	if err != nil {
+		log.Fatalf("template interpolation failed: %v", err)
 	}
 
 	/*
@@ -91,7 +115,7 @@ func Init(cmd *cobra.Command, args []string) {
 	 */
 	src = strings.Join([]string{_src, c.Template, c.Ttools}, "/")
 
-	dst = strings.Join([]string{bp, c.Internal, c.Tools, c.Ttools}, "/")
+	dst = strings.Join([]string{bp, c.Internal, c.Tools, c.Ttools[:len(c.Ttools)-4]}, "/")
 	if err := copyFile(src, dst); err != nil {
 		log.Fatalf("copy main failed: %v", err)
 	}
@@ -102,7 +126,7 @@ func Init(cmd *cobra.Command, args []string) {
 	 */
 	src = strings.Join([]string{_src, c.Template, c.Tregistry}, "/")
 
-	dst = strings.Join([]string{bp, c.Internal, c.Registry, c.Tregistry}, "/")
+	dst = strings.Join([]string{bp, c.Internal, c.Registry, c.Tregistry[:len(c.Tregistry)-4]}, "/")
 	if err := copyFile(src, dst); err != nil {
 		log.Fatalf("registry copy failed: %v", err)
 	}
@@ -113,7 +137,7 @@ func Init(cmd *cobra.Command, args []string) {
 	 */
 	src = strings.Join([]string{_src, c.Template, c.Tloader}, "/")
 
-	dst = strings.Join([]string{bp, c.Internal, c.Registry, c.Tloader}, "/")
+	dst = strings.Join([]string{bp, c.Internal, c.Registry, c.Tloader[:len(c.Tloader)-4]}, "/")
 	if err := copyFile(src, dst); err != nil {
 		log.Fatalf("registry copy failed: %v", err)
 	}

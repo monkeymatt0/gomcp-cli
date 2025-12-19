@@ -6,11 +6,8 @@ const (
 	Registry = "registry"
 
 	Template  = "template"
-	Tmain     = "main.go"
-	Ttools    = "tools.go"
-	Tregistry = "registry.go"
-	Tloader   = "loader.go"
-
-	HOST = "localhost"
-	PORT = "3000"
+	Tmain     = "main.go.tpl"
+	Ttools    = "tools.go.tpl"
+	Tregistry = "registry.go.tpl"
+	Tloader   = "loader.go.tpl"
 )

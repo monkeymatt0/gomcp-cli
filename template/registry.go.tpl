@@ -8,7 +8,7 @@ var tools = make(map[string]mcp.Tool)
 
 // Register an mcp tool
 func Register(tool mcp.Tool) {
-	tools[tool.Name()] = tool
+	tools[tool.Name] = tool
 }
 
 // GetAll return all the mcp tools in tools
