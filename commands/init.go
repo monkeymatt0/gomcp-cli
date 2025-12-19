@@ -26,13 +26,15 @@ var InitCommand = &cobra.Command{
 func Init(cmd *cobra.Command, args []string) {
 
 	// Populating template data
+	folder_name := "mcp_" + args[1]
+
 	data := mainTemplateData{
-		Module:      args[1],
+		Module:      folder_name,
 		ProjectName: args[1],
 	}
 
 	// Project's folder creation
-	if err := os.Mkdir(args[1], 0755); err != nil {
+	if err := os.Mkdir(folder_name, 0755); err != nil {
 		log.Fatalf("mkdir failed: %v", err)
 	}
 
@@ -43,17 +45,17 @@ func Init(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	bp := strings.Join([]string{wd, args[1]}, "/")
+	bp := strings.Join([]string{wd, folder_name}, "/")
 
 	// Calling go mod init
-	gmi := exec.Command("go", "mod", "init", args[1])
+	gmi := exec.Command("go", "mod", "init", folder_name)
 	gmi.Dir = bp
 	if err := gmi.Run(); err != nil {
 		log.Fatalf("go mod init failed: %v", err)
 	}
 
 	// Calling go get
-	gi := exec.Command("go", "get", "github.com/modelcontextprotocol/go-sdk", args[1])
+	gi := exec.Command("go", "get", "github.com/modelcontextprotocol/go-sdk", folder_name)
 	gi.Dir = bp
 	if err := gi.Run(); err != nil {
 		log.Fatalf("go get failed: %v", err)
