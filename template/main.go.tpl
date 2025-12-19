@@ -13,7 +13,7 @@ func main() {
 	// Your server MCP: change the name
 	server := mcp.NewServer(&mcp.Implementation{Name: "{{ .ProjectName }}", Version: "v1.0.0"}, nil)
 
-	r.LoadTools(server)
+	r.RegisterAll(server)
 
 	// HTTP mode
 	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
