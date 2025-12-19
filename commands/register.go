@@ -29,59 +29,66 @@ func Generate(cmd *cobra.Command, args []string) {
 		ToolName:     args[1],
 	}
 	// 1. Create a new file in internal/tools folder using the passed name
-	_bp, err := os.Getwd()
+	_bp, err := os.Executable()
 	if err != nil {
 		log.Fatalf("Getwd failed: %v", err)
 	}
 
-	els, err2 := os.ReadDir(_bp)
-	if err2 != nil {
-		log.Fatalf("ReadDir failed: %v", err2)
-	}
-
-	pf := ""
-
-	for _, el := range els {
-		if strings.Contains(el.Name(), "mcp_") {
-			pf = el.Name()
-		}
-	}
-
-	bp := strings.Join([]string{_bp, pf}, "/")
+	t := strings.Split(_bp, "/")
+	_bp = strings.Join(t[:len(t)-1], "/")
 
 	// 1.2 Generating the file tool
 	src := strings.Join([]string{_bp, c.Template, c.Ttcustom}, "/")
-	dst := strings.Join([]string{bp, c.Internal, c.Tools, strings.Join([]string{args[1], "go"}, ".")}, "/")
+
+	// project dst
+	_wd, err2 := os.Getwd()
+	if err2 != nil {
+		log.Fatalf("Getwd failed: %v", err2)
+	}
+
+	dirs, err3 := os.ReadDir(_wd)
+	if err3 != nil {
+		log.Fatalf("Failed to read a directory: %v", err3)
+	}
+
+	pn := ""
+	for _, dir := range dirs {
+		if strings.Contains(dir.Name(), "mcp_") {
+			pn = dir.Name()
+		}
+	}
+
+	dst := strings.Join([]string{_wd, pn, c.Internal, c.Tools, strings.Join([]string{args[1], "go"}, ".")}, "/")
 
 	tf, err := os.Create(dst)
 	if err != nil {
 		log.Fatalf("file copy tool registration failed: %v", err)
 	}
 
-	tplf, err2 := template.ParseFiles(src)
-	if err2 != nil {
-		log.Fatalf("parse files failed: %e", err2)
+	tplf, err4 := template.ParseFiles(src)
+	if err4 != nil {
+		log.Fatalf("parse files failed: %e", err4)
 	}
 
-	if err := tplf.Execute(tf, data); err != nil {
-		log.Fatalf("failed to execute template: %e", err)
+	if err5 := tplf.Execute(tf, data); err5 != nil {
+		log.Fatalf("failed to execute template: %e", err5)
 	}
 
 	// 2. Append the tools on the MCP server
-	fp := strings.Join([]string{bp, c.Internal, c.Registry, c.Tregistry[:len(c.Tregistry)-4]}, "/")
-	f, err := os.ReadFile(fp)
-	if err != nil {
-		log.Fatalf("read file failed: %v", err)
+	fp := strings.Join([]string{_wd, pn, c.Internal, c.Registry, c.Tregistry[:len(c.Tregistry)-4]}, "/")
+	f, err6 := os.ReadFile(fp)
+	if err6 != nil {
+		log.Fatalf("read file failed: %v", err6)
 	}
 
 	content := string(f)
-	marker := "// gomcp:tools"
+	marker := "\t// gomcp:tools"
 
 	if !strings.Contains(content, marker) {
 		log.Fatalf("marker missing, want: %v", marker)
 	}
 
-	line := "\nserver.AddTool(tools." + strings.ToUpper(args[1][:1]) + strings.ToLower(args[1][1:]) + "(), nil)\n"
+	line := "\tserver.AddTool(tools." + strings.ToUpper(args[1][:1]) + strings.ToLower(args[1][1:]) + "(), nil)\n"
 	if strings.Contains(content, line) {
 		log.Fatal("tool already exists")
 	}
